@@ -12,6 +12,18 @@ get_queue = queue.Queue()
 post_queue = queue.Queue()
 
 class newRequester(http.server.SimpleHTTPRequestHandler):
+    def auto_headers(self, data):
+        """
+        Make headers based on given data.
+
+        Keyword arguments:
+        data -- data sended
+        """
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.send_header("Content-length", data.__len__())
+        self.end_headers()
+        
     def do_GET(self):
         """
         do_GET manage GET requests. It simply take data from the 
@@ -25,12 +37,8 @@ class newRequester(http.server.SimpleHTTPRequestHandler):
         else:
             data=bytes("", "UTF-8")
         data = base64.b64encode(data)
+        self.auto_headers(data)
         #2. Headers and send
-        self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.send_header("Content-transfer-encodint", "base64")
-        self.send_header("Content-length", data.__len__())
-        self.end_headers()
         self.wfile.write(data)
 
     def do_POST(self):
@@ -44,14 +52,15 @@ class newRequester(http.server.SimpleHTTPRequestHandler):
         data = self.rfile.read(content_len)
         post_queue.put(base64.b64decode(data))
         #2. Sending response (OK)
-        self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.send_header("Content-length", "OK".__len__())
-        self.end_headers()
-        self.wfile.write(bytes("OK", "UTF-8"))
+        data = bytes("OK", "UTF-8")
+        self.auto_headers(data)
+        self.wfile.write()
 
 
 def readWrite():
+    """
+    Read and write forever on the sock.
+    """
     global the_sock
     global post_queue
     global get_queue

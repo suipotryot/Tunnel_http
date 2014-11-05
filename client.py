@@ -5,20 +5,36 @@ import time
 import base64
 import select
 
-def writeOn22(the_sock):
+def writeOnSock(the_sock, host="http://127.0.0.1", port=8000):
+    """
+    Send GET requests to host and port and put responses data
+    on the_sock.
+
+    Keyword arguments:
+    the_sock -- The socket to write on
+    host -- The host to send GET requests to (default "http://127.0.0.1")
+    port -- The port to send GET requests to (default 8000)
+    """
     while True:
-        #sans data, on GET
         try:
-            res = urllib.request.urlopen("http://127.0.0.1:8000").read()
+            res = urllib.request.urlopen(host+":"+str(port)).read()
         except:
             pass
         else:
             the_sock.send(base64.b64decode(res))
         time.sleep(0.5)
 
-def readOn22(the_sock):
+def readOnSock(the_sock, host="http://127.0.0.1", port=8000):
+    """
+    Send POST requests to host and port with data found from
+    the_sock.
+
+    Keyword arguments:
+    the_sock -- The socket to write on
+    host -- The host to send GET requests to (default "http://127.0.0.1")
+    port -- The port to send GET requests to (default 8000)
+    """
     while True:
-        #avec data, on POST
         data=bytes("", "UTF-8")
         data_is_full = False
         while not data_is_full:
@@ -29,15 +45,14 @@ def readOn22(the_sock):
                 data_is_full = True
         try:
             if data:
-                print("Sending fro m22 to 8000 ", data)
-                res = urllib.request.urlopen("http://127.0.0.1:8000", base64.b64encode(data))
+                res = urllib.request.urlopen(host+":"+str(port), base64.b64encode(data))
         except:
             time.sleep(0.5)
 
 if __name__ == "__main__":
     the_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     the_sock.connect(("", 22))
-    a = threading.Thread(None, writeOn22, None, (the_sock,)) 
+    a = threading.Thread(None, writeOnSock, None, (the_sock,)) 
     a.start() 
-    b = threading.Thread(None, readOn22, None, (the_sock,))
+    b = threading.Thread(None, readOnSock, None, (the_sock,))
     b.start()
