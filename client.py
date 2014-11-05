@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+
+import sys
 import socket
 import threading
 import urllib.request
@@ -50,9 +53,19 @@ def readOnSock(the_sock, host="http://127.0.0.1", port=8000):
             time.sleep(0.5)
 
 if __name__ == "__main__":
+    #1. Check arguments
+    host = "http://127.0.0.1"
+    port = 8000
+    if sys.argv.__len__() > 1:
+        if sys.argv[1] == "-h":
+            print("usage :\n\t./client.py [host=\"http://127.0.0.1\"] [port=8000]")
+            exit()
+        host = sys.argv[1]
+    if sys.argv.__len__() > 2: port = sys.argv[2]
+    #2. Launching threads
     the_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     the_sock.connect(("", 22))
-    a = threading.Thread(None, writeOnSock, None, (the_sock,)) 
+    a = threading.Thread(None, writeOnSock, None, (the_sock, host, port)) 
     a.start() 
-    b = threading.Thread(None, readOnSock, None, (the_sock,))
+    b = threading.Thread(None, readOnSock, None, (the_sock, host, port))
     b.start()
