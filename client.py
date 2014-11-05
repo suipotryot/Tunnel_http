@@ -1,60 +1,43 @@
-
-import queue
 import socket
 import threading
-
 import urllib.request
+import time
+import base64
+import select
 
-
-class SocketManager:
-    the_sock = None
-    the_queue = queue.Queue()
-
-    @staticmethod
-    def setSock(the_sock):
-        SocketManager.the_sock = the_sock
-
-    @staticmethod
-    def getSock():
-        return SocketManager.the_sock
-
-    @staticmethod
-    def setQueue(the_queue):
-        SocketManager.the_queue = the_queue
-
-    @staticmethod
-    def getQueue():
-        return SocketManager.the_queue
-
-
-def sendToServer():
-    while 1:
-        print("and now...")
+def writeOn22(the_sock):
+    while True:
+        #sans data, on GET
         try:
-            data = SocketManager.getQueue().get()
-            print("Reading from the queue")
-            res = urllib.request.urlopen("http://127.0.0.1:8000", data).read()
-            print("writing with data")
-        except:
             res = urllib.request.urlopen("http://127.0.0.1:8000").read()
-            print("writing with no data")
-        print('sending')
-        SocketManager.getSock().send(res)
-        print("sended")
-    print("this is the end")
+        except:
+            pass
+        else:
+            the_sock.send(base64.b64decode(res))
+        time.sleep(0.5)
 
-def listenOn(port=22):
-    host = ''
-    SocketManager.setSock(socket.socket(socket.AF_INET, socket.SOCK_STREAM))
-    SocketManager.getSock().connect((host, port))
-    while 1:
-        print("writing in the queue")
-        data = SocketManager.getSock().recv(1024)
-        SocketManager.getQueue().put(data)
+def readOn22(the_sock):
+    while True:
+        #avec data, on POST
+        data=bytes("", "UTF-8")
+        data_is_full = False
+        while not data_is_full:
+            read, write, error = select.select([the_sock], [the_sock], [])
+            if the_sock in read:
+                data += the_sock.recv(512)
+            else:
+                data_is_full = True
+        try:
+            if data:
+                print("Sending fro m22 to 8000 ", data)
+                res = urllib.request.urlopen("http://127.0.0.1:8000", base64.b64encode(data))
+        except:
+            time.sleep(0.5)
 
-
-a = threading.Thread(None, listenOn, None) 
-a.start() 
-b = threading.Thread(None, sendToServer, None)
-b.start()
-
+if __name__ == "__main__":
+    the_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    the_sock.connect(("", 22))
+    a = threading.Thread(None, writeOn22, None, (the_sock,)) 
+    a.start() 
+    b = threading.Thread(None, readOn22, None, (the_sock,))
+    b.start()

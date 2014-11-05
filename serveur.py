@@ -3,77 +3,84 @@ import socket
 import socketserver
 import http.server
 import threading
+import base64
+import time
+import select
 
+the_sock = None
+get_queue = queue.Queue()
+post_queue = queue.Queue()
 
-class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    def do_POST(self):
-        #On envoi les infos recues sur la socket
-        content_len = int(self.headers['content-length'])
-        result = self.rfile.read(content_len)
-        print("Sending data to 2222 sock")
-        RequestHandler.getSock().send(result)
-        #On retourne le contenu de the_queue
-        self.send_response(200, message="Ok mec")
+class newRequester(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        """
+        do_GET manage GET requests. It simply take data from the 
+        get_queue (filled by another thread) and send it back to
+        the client.
+        """
+        global get_queue
+        #1. Getting data
+        if not get_queue.empty():
+            data = get_queue.get()
+        else:
+            data=bytes("", "UTF-8")
+        data = base64.b64encode(data)
+        #2. Headers and send
+        self.send_response(200)
         self.send_header("Content-type", "text/html")
+        self.send_header("Content-transfer-encodint", "base64")
+        self.send_header("Content-length", data.__len__())
         self.end_headers()
-        msg = RequestHandler.getQueue().get()
-        print("Sending response to 8000")
-        self.wfile.write(msg)
-        print("Response sended")
-        #self.wfile.write(bytes("<html><head><title>Title goes here.</title></head>", 'UTF-8'))
-        #self.wfile.write(bytes("<body><p>This is a test.</p>", 'UTF-8'))
-        #self.wfile.write("<p>You accessed path: %s</p>" % self.path)
-        #self.wfile.write(bytes("</body></html>", "UTF-8"))
+        self.wfile.write(data)
 
-class RequestHandler:
-    the_sock = None
-    the_queue = queue.Queue()
+    def do_POST(self):
+        """
+        do_POST manage POST requests. It get the content of the
+        request and put it in the post_queue.
+        """
+        global post_queue
+        #1. Getting data
+        content_len = int(self.headers['content-length'])
+        data = self.rfile.read(content_len)
+        post_queue.put(base64.b64decode(data))
+        #2. Sending response (OK)
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.send_header("Content-length", "OK".__len__())
+        self.end_headers()
+        self.wfile.write(bytes("OK", "UTF-8"))
 
-    @staticmethod
-    def setSock(the_sock):
-        RequestHandler.the_sock = the_sock
 
-    @staticmethod
-    def getSock():
-        return RequestHandler.the_sock
-
-    @staticmethod
-    def setQueue(the_queue):
-        RequestHandler.the_queue = the_queue
-
-    @staticmethod
-    def getQueue():
-        return RequestHandler.the_queue
-
-def listenOn(port=8000):
-    """
-    Ecoute sur le port donne (8000 par defaut) pour toujours
-    """
-    Handler = MyHTTPRequestHandler
-    httpd = socketserver.TCPServer(("", port), Handler)
-    print("serving at port", port)
-    httpd.serve_forever()
-
-def server(host='', port=2222):
-    """
-    Ecoute sur le port donne (2222 par defaut), attend une connection
-    et apres enregistre tout ce qu'il reçoit dans the_queue.
-    """
+def readWrite():
+    global the_sock
+    global post_queue
+    global get_queue
+    #1. Wait for ssh connection on port
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((host, port))
-    s.listen(1)
+    s.bind(("", 2222))
+    s.listen(5)
     the_sock, addr = s.accept()
-    RequestHandler.setSock(the_sock)
     print('Connected by', addr)
-    while 1:
-        data = the_sock.recv(1024)
-        print("writing in the queue")
-        RequestHandler.getQueue().put(data)
-    conn.close()
+    #2. Forever: 
+    # - read from post_queue to 2222
+    # - write from 2222 get_queue
+    while True:
+        read, write, error = select.select([the_sock], [the_sock], [])
+        if the_sock in read:
+            data = the_sock.recv(512)
+            get_queue.put(data)
+        if the_sock in write and not post_queue.empty():
+            data = post_queue.get()
+            the_sock.send(data)
+        time.sleep(0.5)
+    s.close()
 
 
-b = threading.Thread(None, server, None, ('', 2222))
-b.start()
-a = threading.Thread(None, listenOn, None, (8000,)) 
-a.start() 
-
+if __name__ == "__main__":
+    #Start readWrite thread
+    b = threading.Thread(None, readWrite, None)
+    b.start()
+    #Start HTTP server
+    httpd = socketserver.TCPServer(("", 8000), newRequester)
+    print("serving at port 8000")
+    httpd.serve_forever()
