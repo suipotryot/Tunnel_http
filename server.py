@@ -87,19 +87,28 @@ def readWrite():
         time.sleep(0.5)
     s.close()
 
+def usage():
+    print('usage: ./server.py [port=80]')
 
 if __name__ == "__main__":
     # Check arguments
     port = 80
     if len(sys.argv) > 1:
         if sys.argv[1] == '-h' or sys.argv[1] == '--help':
-            print('usage: ./server.py [port=80]')
+            usage()
             exit(1)
         port = int(sys.argv[1])
     # Start readWrite thread
     b = threading.Thread(None, readWrite, None)
     b.start()
     # Start HTTP server
-    httpd = socketserver.TCPServer(("", port), newRequester)
-    print("serving at port %d" % port)
-    httpd.serve_forever()
+    try:
+        httpd = socketserver.TCPServer(("", port), newRequester)
+    except PermissionError:
+        print("Port ", port, " refused. Use Sudo if you want to use it.")
+        usage()
+        #TODO (or not...): kill the other running thread.
+        exit(1)
+    else:
+        print("serving at port %d" % port)
+        httpd.serve_forever()

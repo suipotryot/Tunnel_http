@@ -18,6 +18,7 @@ def writeOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
     host -- The host to send GET requests to (default "http://127.0.0.1")
     port -- The port to send GET requests to (default 8000)
     """
+    print("Listening to ", host, ":", port)
     while True:
         try:
             res = opener.open(host+":"+str(port)).read()
@@ -37,6 +38,7 @@ def readOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
     host -- The host to send GET requests to (default "http://127.0.0.1")
     port -- The port to send GET requests to (default 8000)
     """
+    print("Writing on ", host, ":", port)
     while True:
         data = bytes("", "UTF-8")
         data_is_full = False
@@ -58,7 +60,7 @@ if __name__ == "__main__":
     port = 8000
     if sys.argv.__len__() > 1:
         if sys.argv[1] == "-h":
-            print("usage: ./client.py [host=\"http://127.0.0.1\"] [port=8000] [proxy_host] [proxy_port]")
+            print("usage: ./client.py [host=\"http://127.0.0.1\" [port=8000 [proxy_host proxy_port]]]")
             exit(1)
         host = sys.argv[1]
     if sys.argv.__len__() > 2:
