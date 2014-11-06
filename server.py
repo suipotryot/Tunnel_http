@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+
+import sys
 import queue
 import socket
 import socketserver
@@ -23,10 +26,10 @@ class newRequester(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-type", "text/html")
         self.send_header("Content-length", data.__len__())
         self.end_headers()
-        
+
     def do_GET(self):
         """
-        do_GET manage GET requests. It simply take data from the 
+        do_GET manage GET requests. It simply take data from the
         get_queue (filled by another thread) and send it back to
         the client.
         """
@@ -35,7 +38,7 @@ class newRequester(http.server.SimpleHTTPRequestHandler):
         if not get_queue.empty():
             data = get_queue.get()
         else:
-            data=bytes("", "UTF-8")
+            data = bytes("", "UTF-8")
         data = base64.b64encode(data)
         self.auto_headers(data)
         #2. Headers and send
@@ -70,7 +73,7 @@ def readWrite():
     s.listen(5)
     the_sock, addr = s.accept()
     print('Connected by', addr)
-    #2. Forever: 
+    #2. Forever:
     # - read from post_queue to 2222
     # - write from 2222 get_queue
     while True:
@@ -86,10 +89,17 @@ def readWrite():
 
 
 if __name__ == "__main__":
-    #Start readWrite thread
+    # Check arguments
+    port = 80
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '-h' or sys.argv[1] == '--help':
+            print('usage: ./server.py [port=80]')
+            exit(1)
+        port = int(sys.argv[1])
+    # Start readWrite thread
     b = threading.Thread(None, readWrite, None)
     b.start()
-    #Start HTTP server
-    httpd = socketserver.TCPServer(("", 8000), newRequester)
-    print("serving at port 8000")
+    # Start HTTP server
+    httpd = socketserver.TCPServer(("", port), newRequester)
+    print("serving at port %d" % port)
     httpd.serve_forever()

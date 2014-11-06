@@ -8,7 +8,7 @@ import time
 import base64
 import select
 
-def writeOnSock(the_sock, host="http://127.0.0.1", port=8000):
+def writeOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
     """
     Send GET requests to host and port and put responses data
     on the_sock.
@@ -20,14 +20,14 @@ def writeOnSock(the_sock, host="http://127.0.0.1", port=8000):
     """
     while True:
         try:
-            res = urllib.request.urlopen(host+":"+str(port)).read()
+            res = opener.open(host+":"+str(port)).read()
         except:
             pass
         else:
             the_sock.send(base64.b64decode(res))
         time.sleep(0.5)
 
-def readOnSock(the_sock, host="http://127.0.0.1", port=8000):
+def readOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
     """
     Send POST requests to host and port with data found from
     the_sock.
@@ -38,7 +38,7 @@ def readOnSock(the_sock, host="http://127.0.0.1", port=8000):
     port -- The port to send GET requests to (default 8000)
     """
     while True:
-        data=bytes("", "UTF-8")
+        data = bytes("", "UTF-8")
         data_is_full = False
         while not data_is_full:
             read, write, error = select.select([the_sock], [the_sock], [])
@@ -48,24 +48,36 @@ def readOnSock(the_sock, host="http://127.0.0.1", port=8000):
                 data_is_full = True
         try:
             if data:
-                res = urllib.request.urlopen(host+":"+str(port), base64.b64encode(data))
+                opener.open(host+":"+str(port), base64.b64encode(data))
         except:
             time.sleep(0.5)
 
 if __name__ == "__main__":
-    #1. Check arguments
+    # 1. Check arguments
     host = "http://127.0.0.1"
     port = 8000
     if sys.argv.__len__() > 1:
         if sys.argv[1] == "-h":
-            print("usage :\n\t./client.py [host=\"http://127.0.0.1\"] [port=8000]")
-            exit()
+            print("usage: ./client.py [host=\"http://127.0.0.1\"] [port=8000] [proxy_host] [proxy_port]")
+            exit(1)
         host = sys.argv[1]
-    if sys.argv.__len__() > 2: port = sys.argv[2]
-    #2. Launching threads
+    if sys.argv.__len__() > 2:
+        port = sys.argv[2]
+    if sys.argv.__len__() == 5:
+        proxy_host = sys.argv[3]
+        proxy_port = sys.argv[4]
+        proxy_handler = urllib.request.ProxyHandler({'http': proxy_host + ':' + proxy_port})
+        opener = urllib.request.build_opener(proxy_handler)
+    else:
+        opener = urllib.request.build_opener()
+    opener.addheaders = [
+        ('User-agent', 'Mozilla/5.0')
+    ]
+
+    # 2. Launching threads
     the_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     the_sock.connect(("", 22))
-    a = threading.Thread(None, writeOnSock, None, (the_sock, host, port)) 
-    a.start() 
-    b = threading.Thread(None, readOnSock, None, (the_sock, host, port))
+    a = threading.Thread(None, writeOnSock, None, (the_sock, opener, host, port))
+    a.start()
+    b = threading.Thread(None, readOnSock, None, (the_sock, opener, host, port))
     b.start()
