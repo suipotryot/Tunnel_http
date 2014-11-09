@@ -1,0 +1,8 @@
+# Temp files created by most text editors
+*~
+
+# vim swap files
+*.swp
+
+# Byte-compiled
+*.pyc

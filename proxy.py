@@ -24,13 +24,14 @@ def check_user_agent(req):
     return True
 
 def check_server_name(res):
-    server_name = res.getHeader('Server')[0]
+    list_server_name = res.getHeader('Server')
 
     # TODO: use a whitelist
-    if server_name == '' \
-            or 'python' in server_name.lower() \
-            or 'perl' in server_name.lower():
-        return False
+    for server_name in list_server_name:
+        if server_name == '' \
+                or 'python' in server_name.lower() \
+                or 'perl' in server_name.lower():
+            return False
     return True
 
 def check_ssh_header(res):
