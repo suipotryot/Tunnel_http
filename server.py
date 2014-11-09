@@ -9,6 +9,7 @@ import threading
 import time
 import select
 import urllib.parse
+import re
 
 from Encrypter import Encrypter
 
@@ -40,6 +41,10 @@ class newRequester(http.server.SimpleHTTPRequestHandler):
         get_queue (filled by another thread) and send it back to
         the client.
         """
+        path = self.path.split('/')[-1]
+        if not re.match('^index_\w{32}\.html$', path):
+            return
+
         global get_queue
         #1. Getting data
         if not get_queue.empty():
@@ -56,6 +61,10 @@ class newRequester(http.server.SimpleHTTPRequestHandler):
         do_POST manage POST requests. It get the content of the
         request and put it in the post_queue.
         """
+        path = self.path.split('/')[-1]
+        if not re.match('^index_\w{32}\.html$', path):
+            return
+
         global post_queue
         #1. Getting data
         content_len = int(self.headers['content-length'])
@@ -92,7 +101,7 @@ def readWrite():
         if the_sock in write and not post_queue.empty():
             data = post_queue.get()
             the_sock.send(data)
-        time.sleep(0.5)
+        time.sleep(0.2)
     s.close()
 
 def usage():
