@@ -4,11 +4,13 @@ import base64
 class Encrypter:
     @staticmethod
     def encode(data):
-        return base64.b64encode(Encrypter.cesar_all(data, 1))
+        return base64.b64encode(data)
+        #return base64.b64encode(Encrypter.cesar_all(data, 1))
 
     @staticmethod
     def decode(data):
-        return Encrypter.cesar_all(base64.b64decode(data), -1)
+        return base64.b64decode(data)
+        #return Encrypter.cesar_all(base64.b64decode(data), -1)
 
     @staticmethod
     def cesar_all(string, decalage):
