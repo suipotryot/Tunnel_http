@@ -9,6 +9,8 @@ import time
 import base64
 import select
 
+from Encrypter import Encrypter
+
 def writeOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
     """
     Send GET requests to host and port and put responses data
@@ -27,7 +29,7 @@ def writeOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
         except:
             pass
         else:
-            the_sock.send(base64.b64decode(res))
+            the_sock.send(Encrypter.decode(res))
         time.sleep(0.5)
 
 def readOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
@@ -53,7 +55,7 @@ def readOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
                 data_is_full = True
         try:
             if data:
-                params = urllib.parse.urlencode({'data': base64.b64encode(data)})
+                params = urllib.parse.urlencode({'data': Encrypter.encode(data)})
                 params = params.encode('utf-8')
                 opener.open(url, params)
         except:

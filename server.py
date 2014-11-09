@@ -6,10 +6,11 @@ import socket
 import socketserver
 import http.server
 import threading
-import base64
 import time
 import select
 import urllib.parse
+
+from Encrypter import Encrypter
 
 the_sock = None
 get_queue = queue.Queue()
@@ -45,7 +46,7 @@ class newRequester(http.server.SimpleHTTPRequestHandler):
             data = get_queue.get()
         else:
             data = bytes("", "UTF-8")
-        data = base64.b64encode(data)
+        data = Encrypter.encode(data)
         self.auto_headers(data)
         #2. Headers and send
         self.wfile.write(data)
@@ -60,7 +61,7 @@ class newRequester(http.server.SimpleHTTPRequestHandler):
         content_len = int(self.headers['content-length'])
         post_data = urllib.parse.parse_qs(self.rfile.read(content_len).decode('utf-8'))
         data = post_data['data'][0]
-        post_queue.put(base64.b64decode(data))
+        post_queue.put(Encrypter.decode(data))
         #2. Sending response (OK)
         data = bytes("OK", "UTF-8")
         self.auto_headers(data)
