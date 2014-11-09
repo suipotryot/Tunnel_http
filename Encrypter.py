@@ -31,6 +31,3 @@ class Encrypter:
         if char in maj_list:
             return maj_list[(maj_list.index(char)+decalage)%26]
         return char
-
-#print(Encrypter.encode('a'))
-print(Encrypter.decode(Encrypter.encode('azerty')))
