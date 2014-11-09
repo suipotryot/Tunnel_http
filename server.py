@@ -9,6 +9,7 @@ import threading
 import base64
 import time
 import select
+import urllib.parse
 
 the_sock = None
 get_queue = queue.Queue()
@@ -52,7 +53,8 @@ class newRequester(http.server.SimpleHTTPRequestHandler):
         global post_queue
         #1. Getting data
         content_len = int(self.headers['content-length'])
-        data = self.rfile.read(content_len)
+        post_data = urllib.parse.parse_qs(self.rfile.read(content_len).decode('utf-8'))
+        data = post_data['data'][0]
         post_queue.put(base64.b64decode(data))
         #2. Sending response (OK)
         data = bytes("OK", "UTF-8")

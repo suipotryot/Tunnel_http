@@ -4,6 +4,7 @@ import sys
 import socket
 import threading
 import urllib.request
+import urllib.parse
 import time
 import base64
 import select
@@ -19,9 +20,10 @@ def writeOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
     port -- The port to send GET requests to (default 8000)
     """
     print("Listening to ", host, ":", port)
+    url = host + ':' + str(port) + '/index.html'
     while True:
         try:
-            res = opener.open(host+":"+str(port)).read()
+            res = opener.open(url).read()
         except:
             pass
         else:
@@ -39,6 +41,7 @@ def readOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
     port -- The port to send GET requests to (default 8000)
     """
     print("Writing on ", host, ":", port)
+    url = host + ':' + str(port) + '/index.html'
     while True:
         data = bytes("", "UTF-8")
         data_is_full = False
@@ -50,7 +53,9 @@ def readOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
                 data_is_full = True
         try:
             if data:
-                opener.open(host+":"+str(port), base64.b64encode(data))
+                params = urllib.parse.urlencode({'data': base64.b64encode(data)})
+                params = params.encode('utf-8')
+                opener.open(url, params)
         except:
             time.sleep(0.5)
 
