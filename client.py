@@ -8,6 +8,7 @@ import urllib.parse
 import time
 import base64
 import select
+import random
 
 def writeOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
     """
@@ -20,15 +21,16 @@ def writeOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
     port -- The port to send GET requests to (default 8000)
     """
     print("Listening to ", host, ":", port)
-    url = host + ':' + str(port) + '/index.html'
     while True:
         try:
+            hash = random.getrandbits(128)
+            url = host + ':' + str(port) + '/index_%032x.html' % hash
             res = opener.open(url).read()
         except:
             pass
         else:
             the_sock.send(base64.b64decode(res))
-        time.sleep(0.5)
+        time.sleep(0.2)
 
 def readOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
     """
@@ -41,7 +43,6 @@ def readOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
     port -- The port to send GET requests to (default 8000)
     """
     print("Writing on ", host, ":", port)
-    url = host + ':' + str(port) + '/index.html'
     while True:
         data = bytes("", "UTF-8")
         data_is_full = False
@@ -53,11 +54,13 @@ def readOnSock(the_sock, opener, host="http://127.0.0.1", port=8000):
                 data_is_full = True
         try:
             if data:
+                hash = random.getrandbits(128)
+                url = host + ':' + str(port) + '/index_%032x.html' % hash
                 params = urllib.parse.urlencode({'data': base64.b64encode(data)})
                 params = params.encode('utf-8')
                 opener.open(url, params)
         except:
-            time.sleep(0.5)
+            time.sleep(0.2)
 
 if __name__ == "__main__":
     # 1. Check arguments
