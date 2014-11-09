@@ -23,9 +23,14 @@ class newRequester(http.server.SimpleHTTPRequestHandler):
         Keyword arguments:
         data -- data sended
         """
+        self.server_version = 'nginx'
+        self.sys_version = ''
+        # FIXME: Add a space at the end of server_version
+        # (return self.server_version + ' ' + self.sys_version)
         self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.send_header("Content-length", data.__len__())
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header('Cache-Control', 'no-cache')
+        self.send_header('Content-Length', data.__len__())
         self.end_headers()
 
     def do_GET(self):
