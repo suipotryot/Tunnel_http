@@ -18,7 +18,7 @@ get_queue = queue.Queue()
 post_queue = queue.Queue()
 
 class newRequester(http.server.SimpleHTTPRequestHandler):
-    def auto_headers(self, data):
+    def auto_headers(self, data, code=200):
         """
         Make headers based on given data.
 
@@ -29,7 +29,7 @@ class newRequester(http.server.SimpleHTTPRequestHandler):
         self.sys_version = ''
         # FIXME: Add a space at the end of server_version
         # (return self.server_version + ' ' + self.sys_version)
-        self.send_response(200)
+        self.send_response(code)
         self.send_header('Content-Type', 'text/html; charset=utf-8')
         self.send_header('Cache-Control', 'no-cache')
         self.send_header('Content-Length', data.__len__())
@@ -43,6 +43,7 @@ class newRequester(http.server.SimpleHTTPRequestHandler):
         """
         path = self.path.split('/')[-1]
         if not re.match('^index_\w{32}\.html$', path):
+            self.auto_headers("", 404)
             return
 
         global get_queue
