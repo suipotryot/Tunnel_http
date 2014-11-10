@@ -28,10 +28,7 @@ def check_404(req):
     url = req.getHost()
 
     if url[1] == 80:
-        if '192' in url[0]:
-            url = 'http://' + url[0] + "/azhkjdhvpoiu134124EZfgsdf23134lkfsdjfh34354342.html"
-        else:
-            url = 'http://www.' + url[0] + "/azhkjdhvpoiu134124EZfgsdf23134lkfsdjfh34354342.html"
+        url = 'http://' + url[0] + "/azhkjdhvpoiu134124EZfgsdf23134lkfsdjfh34354342.html"
     else:
         return
 
@@ -68,9 +65,6 @@ def check_server_name(res):
     return True
 
 def check_ssh_header(res):
-    import base64
-
-    body = base64.b64decode(res.body)
-    if 'OpenSSH_' in body:
+    if 'OpenSSH_' in res.body:
         return False
     return True
