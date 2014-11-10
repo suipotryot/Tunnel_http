@@ -7,8 +7,8 @@ class Encrypter:
     @staticmethod
     def encode(data):
         data = Encrypter.left+data+Encrypter.right
-        data = data.replace('SSH', '$$%%BITE%%$$')
-        data = data.replace('ssh', '$$%%bite%%$$')
+        data = data.replace(b'SSH', b'$$%%BITE%%$$')
+        data = data.replace(b'ssh', b'$$%%bite%%$$')
         return base64.b64encode(data)
         #return base64.b64encode(Encrypter.cesar_all(data, 1))
 
@@ -16,8 +16,8 @@ class Encrypter:
     def decode(data):
         data = base64.b64decode(data)
         data = data[Encrypter.left.__len__():-Encrypter.right.__len__()]
-        data = data.replace('$$%%BITE%%$$', 'SSH')
-        data = data.replace('$$%%bite%%$$', 'ssh')
+        data = data.replace(b'$$%%BITE%%$$', b'SSH')
+        data = data.replace(b'$$%%bite%%$$', b'ssh')
         return data
         #return Encrypter.cesar_all(base64.b64decode(data), -1)
 
