@@ -2,14 +2,18 @@
 import base64
 
 class Encrypter:
+    left = '<!DOCTYPE html> <html lang="en"> <head> <meta charset="utf-8"> </head><body><h1>Hello, world!</h1>'
+    right = '</body></html>'
     @staticmethod
     def encode(data):
+        data =Encrypter.left+data+Encrypter.right
         return base64.b64encode(data)
         #return base64.b64encode(Encrypter.cesar_all(data, 1))
 
     @staticmethod
     def decode(data):
-        return base64.b64decode(data)
+        data = base64.b64decode(data)
+        return data[Encrypter.left.__len__():-Encrypter.right.__len__()]
         #return Encrypter.cesar_all(base64.b64decode(data), -1)
 
     @staticmethod
